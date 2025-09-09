@@ -1,0 +1,63 @@
+version: 1
+defaults:
+  time_bin_ms: 1
+  window_halfwidth_ms: [16, 32, 64, 96]
+  jitter_tolerance_ms: [0, 1, 2, 5]
+  dendrogram_cuts: "auto"  # grid search + stability selection
+  similarity: "balanced_overlap"  # rate-aware weighting
+  clustering: "complete"
+  consolidate_signature: "ICI-multiset"
+  surrogates:
+    kinds: ["jitter±2", "jitter±5", "isi_preserve", "inhom_poisson_match_rate"]
+    K: 300
+  fdr_alpha: 0.05
+  chunking:
+    mode: "sliding"
+    chunk_ms: 60000
+    hop_ms: 10000
+datasets:
+  synthetic_grid:
+    kind: "synthetic"
+    sweeps:
+      M: [1, 4, 16, 64]
+      N: [50, 100, 200]
+      motif_span_ms: [20, 40, 80]
+      repetitions: [3, 5, 10, 20]
+      spikes_per_motif: [8, 16, 32]
+      bg_rate_hz: [0.5, 1, 5, 10]
+      jitter_ms: [0, 1, 2, 5]
+    metrics: ["precision", "recall", "f1", "auroc", "auprc", "coverage", "mdl_bits_saved", "runtime", "mem_mb", "stability_vi"]
+  neuromorphic_shd:
+    kind: "neuromorphic"
+    source: "SHD"
+    folds: 5
+    activation_thresholds_pct: [30, 50, 70, 90, 100]
+    jitter_tolerance_ms: [1, 2, 5]
+    classifiers: ["logreg", "linear_svm"]
+    metrics: ["balanced_accuracy", "auroc", "activation_specificity", "activation_rate"]
+    nulls: ["label_permutation", "jitter±2", "isi_preserve"]
+  biology_mea:
+    kind: "biology"
+    source: ["hc2", "pfc1", "ssc3", "ac3", "steinmetz_subset"]
+    mode: ["continuous", "event_aligned"]
+    chunking:
+      chunk_ms: [30000, 60000]
+      hop_ms: [5000, 10000]
+    per_unit_cap: [0.05, 0.1]  # max fraction of a motif from any one unit
+    metrics: ["enrichment_p", "enrichment_z", "fdr_q", "unit_mixing_entropy", "coverage", "mdl_bits_saved", "reproducibility"]
+outputs:
+  figures:
+    - pipeline_schematic
+    - jitter_matching_cartoon
+    - synthetic_pr_roc_grids
+    - stability_vi_heatmaps
+    - scaling_curves
+    - shd_activation_frontier
+    - shd_confusion_matrix
+    - bio_enrichment_violins
+    - bio_unit_mixing_hist
+    - coverage_vs_null
+  tables:
+    - synthetic_sweep_summary
+    - neuromorphic_cv_scores
+    - biology_enrichment_fdr
